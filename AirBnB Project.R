@@ -257,7 +257,7 @@ pred_lm = predict(all_lm, data=property_info)
 rmse_lm = sqrt(mean((property_info_train$NumReserveDays2016Q3-pred_lm)^2,na.rm=TRUE))
 rmse_lm
 
-## GBM - RMSE = 15.2
+## GBM
 library(gbm)
 library(mlbench)
 
