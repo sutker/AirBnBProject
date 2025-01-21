@@ -1,6 +1,8 @@
 rm(list = ls())
 load(url("https://drive.google.com/uc?export=download&id=1mlJAYmo9TszSJsbYSWhhOY1a3fTJB_Ko"))
 
+## Adding Q1 & Q2 Bookings to Property_Info ##
+
 # Q1 Booking #
 listing_2016Q1_booking <- listing_2016Q1[listing_2016Q1$Status=="R",]
 agg_booking_Q1 <- aggregate(Status~PropertyID, data=listing_2016Q1_booking, FUN=length)
@@ -30,8 +32,9 @@ colnames(agg_blocked_Q2)[2] <- "BlockedQ2"
 property_info <- merge(x=property_info, y=agg_blocked_Q2, by="PropertyID", all.x=TRUE)
 property_info$BlockedQ2[is.na(property_info$BlockedQ2)] <- 0
 
+## Determining NAs ##
 
-### NO NAs ###
+# NO NAs #
 mean(is.na(property_info$NumberofReviews))
 mean(is.na(property_info$MaxGuests))
 mean(is.na(property_info$PublishedNightlyRate))
@@ -40,46 +43,19 @@ mean(is.na(property_info$NumberofPhotos))
 mean(is.na(property_info$BusinessReady))
 mean(is.na(property_info$CancellationPolicy))
 
-### Categorical NAs ###
+# Categorical NAs #
 mean(is.na(property_info$Neighborhood))  
 mean(is.na(property_info$Superhost))   
 mean(is.na(property_info$HostVerified))
 
-#Fixing Categorical NAs
-tb_neighborhood = table(property_info$Neighborhood)
-rare_neighborhood = names(tb_neighborhood[tb_neighborhood<=20])
-property_info$Neighborhood[property_info$Neighborhood %in% rare_neighborhood] = "rare neighborhood"
-property_info$Neighborhood[is.na(property_info$Neighborhood)] = "unknown neighborhood"
-property_info$Neighborhood[property_info$Neighborhood=="unknown neighborhood"] = "rare neighborhood"
-
-property_info$Superhost[is.na(property_info$Superhost)] = "unknown host type"
-
-property_info$HostVerified[is.na(property_info$HostVerified)] = "unknown host verified"
-
-
-### Infrequent NAs ###
+# Infrequent NAs (< 0.01) #
 mean(is.na(property_info$Bedrooms)) 
 mean(is.na(property_info$Bathrooms))   
 mean(is.na(property_info$HostListings))
 mean(is.na(property_info$PublishedWeeklyRate))
 mean(is.na(property_info$PublishedMonthlyRate))
 
-# Fixing Infrequent NAs
-property_info$Bedrooms[is.na(property_info$Bedrooms)] = mean(property_info$Bedrooms,na.rm=TRUE)
-property_info$Bathrooms[is.na(property_info$Bathrooms)] = mean(property_info$Bathrooms,na.rm=TRUE)
-property_info$HostListings[is.na(property_info$HostListings)] = mean(property_info$HostListings,na.rm=TRUE)
-property_info$PublishedWeeklyRate[is.na(property_info$PublishedWeeklyRate)] = mean(property_info$PublishedWeeklyRate,na.rm=TRUE)
-property_info$PublishedMonthlyRate[is.na(property_info$PublishedMonthlyRate)] = mean(property_info$PublishedMonthlyRate,na.rm=TRUE)
-
-
-# Train & Test #
-property_info_train <- property_info[which(property_info$PropertyID %in% reserve_2016Q3_train$PropertyID),]
-property_info_test <- property_info[which(property_info$PropertyID %in% PropertyID_test),]
-
-property_info_train <- merge(property_info_train,reserve_2016Q3_train,on="PropertyID")
-
-
-### Frequent NAs ###
+# Frequent NAs (> 0.01) #
 mean(is.na(property_info$SecurityDeposit)) 
 mean(is.na(property_info$OverallRating))
 mean(is.na(property_info$AccuracyRating))
@@ -93,7 +69,35 @@ mean(is.na(property_info$ResponseTimemin))
 mean(is.na(property_info$CleaningFee))
 mean(is.na(property_info$ExtraPeopleFee))
 
-#Fixing Frequent NAs
+## Fixing NAs ##
+
+# Fixing Categorical NAs #
+tb_neighborhood = table(property_info$Neighborhood)
+rare_neighborhood = names(tb_neighborhood[tb_neighborhood<=20])
+property_info$Neighborhood[property_info$Neighborhood %in% rare_neighborhood] = "rare neighborhood"
+property_info$Neighborhood[is.na(property_info$Neighborhood)] = "unknown neighborhood"
+property_info$Neighborhood[property_info$Neighborhood=="unknown neighborhood"] = "rare neighborhood"
+
+property_info$Superhost[is.na(property_info$Superhost)] = "unknown host type"
+
+property_info$HostVerified[is.na(property_info$HostVerified)] = "unknown host verified"
+
+# Fixing Infrequent NAs #
+property_info$Bedrooms[is.na(property_info$Bedrooms)] = mean(property_info$Bedrooms,na.rm=TRUE)
+property_info$Bathrooms[is.na(property_info$Bathrooms)] = mean(property_info$Bathrooms,na.rm=TRUE)
+property_info$HostListings[is.na(property_info$HostListings)] = mean(property_info$HostListings,na.rm=TRUE)
+property_info$PublishedWeeklyRate[is.na(property_info$PublishedWeeklyRate)] = mean(property_info$PublishedWeeklyRate,na.rm=TRUE)
+property_info$PublishedMonthlyRate[is.na(property_info$PublishedMonthlyRate)] = mean(property_info$PublishedMonthlyRate,na.rm=TRUE)
+
+## Splitting Property_Info into Training & Testing Groups ##
+
+# Train & Test #
+property_info_train <- property_info[which(property_info$PropertyID %in% reserve_2016Q3_train$PropertyID),]
+property_info_test <- property_info[which(property_info$PropertyID %in% PropertyID_test),]
+
+property_info_train <- merge(property_info_train,reserve_2016Q3_train,on="PropertyID")
+
+# Fixing Frequent NAs
 # Security Deposit #
 lm_reg_w_secdep = lm(NumReserveDays2016Q3 ~ BlockedQ1 + BlockedQ2 + BookingQ1 + BookingQ2 + NumberofReviews + MaxGuests + 
                        PublishedNightlyRate + MinimumStay + NumberofPhotos + BusinessReady  + Neighborhood + 
